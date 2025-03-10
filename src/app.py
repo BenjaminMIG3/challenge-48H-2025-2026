@@ -38,17 +38,11 @@ st.markdown("""
         background-color: #4F8BF9;
         color: white;
     }
-    .metric-card {
-        background-color: #FFFFFF;
-        border-radius: 10px;
-        padding: 15px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
     h1, h2, h3 {
         color: #1E3A8A;
     }
     .stPlotlyChart {
-        background-color: white;
+        background-color: black;
         border-radius: 5px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         padding: 10px;
@@ -150,70 +144,100 @@ def display_charts(df):
     # Créer des onglets pour organiser les visualisations
     tabs = st.tabs(["Chronologie", "Sentiments", "Types de problèmes", "Mots clés", "Données brutes"])
     
-    # Filtre de période avec valeurs par défaut intelligentes
-    min_date = df['Date_de_publication'].min().date()
-    max_date = df['Date_de_publication'].max().date()
+    # Calcul des dates min et max
+    min_date = pd.Timestamp(df['Date_de_publication'].min()).tz_localize(None)
+    max_date = pd.Timestamp(df['Date_de_publication'].max()).tz_localize(None)
     
-    # Ajuster la période par défaut pour être plus pertinente (dernier mois si assez de données)
+    # Ajuster la période par défaut (dernier mois si possible)
     default_start = max(min_date, max_date - timedelta(days=30))
     
     # Sidebar pour les filtres
     with st.sidebar:
         st.header("Filtres")
         
+        # Amélioration du filtre de dates
         date_range = st.date_input(
-            "Période d'analyse", 
-            [default_start, max_date], 
-            min_value=min_date, 
-            max_value=max_date
+            "Période d'analyse",
+            value=[default_start.date(), max_date.date()],
+            min_value=min_date.date(),
+            max_value=max_date.date(),
+            help="Sélectionnez une plage de dates. Les heures sont incluses automatiquement (début à 00:00, fin à 23:59)"
         )
         
-        # Filtre par type de problème
+        # Ajouter un sélecteur rapide de périodes
+        period_options = {
+            "Dernière semaine": 7,
+            "Dernier mois": 30,
+            "Dernier trimestre": 90,
+            "Dernière année": 365,
+            "Tout": None
+        }
+        
+        selected_period = st.selectbox(
+            "Sélection rapide",
+            options=list(period_options.keys()),
+            index=1,  # Par défaut sur "Dernier mois"
+            help="Choisissez une période prédéfinie"
+        )
+        
+        # Autres filtres existants (inchangés)
         if 'type' in df.columns:
             types = df['type'].dropna().unique()
             selected_types = st.multiselect(
-                "Types de problèmes", 
+                "Types de problèmes",
                 options=types,
-                default=types[:5] if len(types) > 5 else types  # Sélectionne les 5 premiers par défaut
+                default=types[:5] if len(types) > 5 else types
             )
         else:
             selected_types = []
-        
-        # Filtre par sentiment si disponible
+            
         if 'Sentiment' in df.columns:
             sentiments = df['Sentiment'].dropna().unique()
             selected_sentiments = st.multiselect(
-                "Sentiments", 
+                "Sentiments",
                 options=sentiments,
                 default=sentiments
             )
         else:
             selected_sentiments = []
             
-        # Bouton pour réinitialiser les filtres
         if st.button("Réinitialiser les filtres"):
-            # Cette partie ne fait rien directement, mais le bouton forcera un rafraîchissement
             pass
 
-    # Appliquer les filtres
+    # Application des filtres de dates améliorée
     filtered_df = df.copy()
+    filtered_df['Date_de_publication'] = filtered_df['Date_de_publication'].dt.tz_localize(None)
     
-    if len(date_range) == 2:
-        start_date, end_date = date_range
-        filtered_df = filtered_df[
-            (filtered_df['Date_de_publication'].dt.date >= start_date) & 
-            (filtered_df['Date_de_publication'].dt.date <= end_date)
-        ]
+    # Si une période rapide est sélectionnée, ajuster les dates
+    if selected_period != "Tout" and period_options[selected_period]:
+        days = period_options[selected_period]
+        start_date = pd.Timestamp(max_date - timedelta(days=days)).replace(hour=0, minute=0, second=0)
+        end_date = pd.Timestamp(max_date).replace(hour=23, minute=59, second=59)
+    else:
+        # Utiliser les dates du date_input
+        if len(date_range) == 2:
+            start_date = pd.Timestamp(date_range[0]).replace(hour=0, minute=0, second=0)
+            end_date = pd.Timestamp(date_range[1]).replace(hour=23, minute=59, second=59)
+        else:
+            start_date = min_date
+            end_date = max_date
     
+    # Application du filtre temporel avec prise en compte des heures
+    filtered_df = filtered_df[
+        (filtered_df['Date_de_publication'] >= start_date) & 
+        (filtered_df['Date_de_publication'] <= end_date)
+    ]
+    
+    # Application des autres filtres (inchangé)
     if selected_types and 'type' in filtered_df.columns:
         filtered_df = filtered_df[filtered_df['type'].isin(selected_types)]
         
     if selected_sentiments and 'Sentiment' in filtered_df.columns:
         filtered_df = filtered_df[filtered_df['Sentiment'].isin(selected_sentiments)]
     
-    # Afficher un message si aucune donnée après filtrage
+    # Vérification des données filtrées
     if filtered_df.empty:
-        st.warning("Aucune donnée ne correspond aux filtres sélectionnés.")
+        st.warning(f"Aucune donnée pour la période du {start_date.strftime('%d/%m/%Y %H:%M')} au {end_date.strftime('%d/%m/%Y %H:%M')}")
         return
         
     # Onglet 1: Chronologie
@@ -394,76 +418,47 @@ def display_charts(df):
             st.info("Les données de sentiment ne sont pas disponibles dans ce jeu de données.")
     
     # Onglet 3: Types de problèmes
-    with tabs[2]:
-        if 'type' in filtered_df.columns:
-            st.subheader("Analyse des types de problèmes")
+    with tabs[2]:  # "Types de problèmes" tab
+        st.subheader("Analyse des types de problèmes")
+        
+        # Aggregate data by type
+        type_analysis = filtered_df['type'].value_counts().reset_index()
+        type_analysis.columns = ['type', 'count']
+        
+        # Handle NaN or empty values in 'type' or 'count'
+        type_analysis = type_analysis.dropna()  # Remove rows with NaN
+        type_analysis['count'] = type_analysis['count'].fillna(0).astype(int)  # Ensure count is integer and no NaN
+        
+        # Ensure all sizes are positive (Plotly requires size >= 0)
+        type_analysis['size'] = type_analysis['count'].apply(lambda x: max(x, 1))  # Avoid zero or negative sizes
+        
+        if not type_analysis.empty:
+            # Create scatter plot
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=type_analysis['count'],
+                y=type_analysis['type'],
+                mode='markers',
+                marker=dict(
+                    size=type_analysis['size'],  # Use cleaned size column
+                    sizemode='area',
+                    sizeref=2.*max(type_analysis['size'])/(40.**2),  # Scale sizes appropriately
+                    sizemin=4  # Minimum size for visibility
+                ),
+                text=type_analysis['type'] + ': ' + type_analysis['count'].astype(str) + ' occurrences',
+                hoverinfo='text'
+            ))
             
-            # Répartition des types de problèmes
-            type_counts = filtered_df['type'].value_counts().reset_index()
-            type_counts.columns = ['type', 'count']
+            fig.update_layout(
+                title="Répartition des types de problèmes",
+                xaxis_title="Nombre d'occurrences",
+                yaxis_title="Type de problème",
+                height=600
+            )
             
-            # Calculer le score d'inconfort moyen par type si disponible
-            if 'incomfort' in filtered_df.columns:
-                inconfort_by_type = filtered_df.groupby('type')['incomfort'].mean().reset_index()
-                
-                # Fusionner avec les counts
-                type_analysis = pd.merge(type_counts, inconfort_by_type, on='type', how='left')
-                
-                # Trier par nombre de tweets
-                type_analysis = type_analysis.sort_values('count', ascending=False)
-                
-                # Graphique à barres horizontal avec score d'inconfort
-                fig = go.Figure()
-                
-                fig.add_trace(go.Bar(
-                    y=type_analysis['type'],
-                    x=type_analysis['count'],
-                    orientation='h',
-                    name='Nombre de tweets',
-                    marker_color='#4F8BF9'
-                ))
-                
-                fig.add_trace(go.Scatter(
-                    y=type_analysis['type'],
-                    x=type_analysis['incomfort'],
-                    mode='markers',
-                    name="Score d'inconfort",
-                    marker=dict(
-                        size=type_analysis['incomfort'] * 0.5 + 8,
-                        color='#FF5757',
-                        line=dict(width=1, color='#900000')
-                    )
-                ))
-                
-                fig.update_layout(
-                    title='Types de problèmes et scores d\'inconfort associés',
-                    xaxis_title='Nombre de tweets',
-                    yaxis=dict(title='Type de problème', categoryorder='total ascending'),
-                    legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
-                    height=max(400, len(type_analysis) * 30),
-                    barmode='group',
-                    template='plotly_white'
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-            else:
-                # Version simplifiée sans score d'inconfort
-                fig = px.bar(
-                    type_counts.sort_values('count', ascending=True).tail(15),
-                    y='type',
-                    x='count',
-                    orientation='h',
-                    title='Types de problèmes les plus fréquents'
-                )
-                
-                fig.update_layout(
-                    height=max(400, len(type_counts) * 25),
-                    template='plotly_white'
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True)
         else:
-            st.info("Les données sur les types de problèmes ne sont pas disponibles.")
+            st.warning("Aucune donnée disponible pour les types de problèmes dans la période sélectionnée.")
     
     # Onglet 4: Mots clés
     with tabs[3]:
