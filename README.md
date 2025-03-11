@@ -72,4 +72,11 @@ Ce projet vise à analyser les tweets mentionnant **Engie** en utilisant **Strea
 Installez les dépendances avec :
 
 ```bash
-pip install streamlit pandas plotly wordcloud matplotlib
+pip install -r source/requirements.txt
+
+### 2️⃣ Lancer l'application
+
+```bash
+streamlit run source/app.py
+
+
