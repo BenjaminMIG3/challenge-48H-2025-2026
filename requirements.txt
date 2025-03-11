@@ -7,6 +7,7 @@ attrs==25.1.0
 blinker==1.9.0
 cachetools==5.5.2
 certifi==2025.1.31
+chardet==5.2.0
 charset-normalizer==3.4.1
 click==8.1.8
 comm==0.2.2
@@ -15,6 +16,7 @@ cycler==0.12.1
 debugpy==1.8.13
 decorator==5.2.1
 dotenv==0.9.9
+et_xmlfile==2.0.0
 eval_type_backport==0.2.2
 executing==2.2.0
 fonttools==4.56.0
@@ -43,6 +45,7 @@ mypy-extensions==1.0.0
 narwhals==1.30.0
 nest-asyncio==1.6.0
 numpy==2.2.3
+openpyxl==3.1.5
 packaging==24.2
 pandas==2.2.3
 parso==0.8.4
@@ -66,6 +69,7 @@ python-dotenv==1.0.1
 pytz==2025.1
 pyzmq==26.2.1
 referencing==0.36.2
+reportlab==4.3.1
 requests==2.32.3
 rpds-py==0.23.1
 seaborn==0.13.2
