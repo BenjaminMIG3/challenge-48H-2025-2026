@@ -148,21 +148,9 @@ def display_charts(df):
     min_date = pd.Timestamp(df['Date_de_publication'].min()).tz_localize(None)
     max_date = pd.Timestamp(df['Date_de_publication'].max()).tz_localize(None)
     
-    # Ajuster la période par défaut (dernier mois si possible)
-    default_start = max(min_date, max_date - timedelta(days=30))
-    
     # Sidebar pour les filtres
     with st.sidebar:
         st.header("Filtres")
-        
-        # Amélioration du filtre de dates
-        date_range = st.date_input(
-            "Période d'analyse",
-            value=[default_start.date(), max_date.date()],
-            min_value=min_date.date(),
-            max_value=max_date.date(),
-            help="Sélectionnez une plage de dates. Les heures sont incluses automatiquement (début à 00:00, fin à 23:59)"
-        )
         
         # Ajouter un sélecteur rapide de périodes
         period_options = {
@@ -174,7 +162,7 @@ def display_charts(df):
         }
         
         selected_period = st.selectbox(
-            "Sélection rapide",
+            "Période d'analyse",
             options=list(period_options.keys()),
             index=1,  # Par défaut sur "Dernier mois"
             help="Choisissez une période prédéfinie"
@@ -204,7 +192,7 @@ def display_charts(df):
         if st.button("Réinitialiser les filtres"):
             pass
 
-    # Application des filtres de dates améliorée
+    # Application des filtres de périodes prédéfinies
     filtered_df = df.copy()
     filtered_df['Date_de_publication'] = filtered_df['Date_de_publication'].dt.tz_localize(None)
     
@@ -214,13 +202,8 @@ def display_charts(df):
         start_date = pd.Timestamp(max_date - timedelta(days=days)).replace(hour=0, minute=0, second=0)
         end_date = pd.Timestamp(max_date).replace(hour=23, minute=59, second=59)
     else:
-        # Utiliser les dates du date_input
-        if len(date_range) == 2:
-            start_date = pd.Timestamp(date_range[0]).replace(hour=0, minute=0, second=0)
-            end_date = pd.Timestamp(date_range[1]).replace(hour=23, minute=59, second=59)
-        else:
-            start_date = min_date
-            end_date = max_date
+        start_date = min_date
+        end_date = max_date
     
     # Application du filtre temporel avec prise en compte des heures
     filtered_df = filtered_df[
@@ -425,12 +408,12 @@ def display_charts(df):
         type_analysis = filtered_df['type'].value_counts().reset_index()
         type_analysis.columns = ['type', 'count']
         
-        # Handle NaN or empty values in 'type' or 'count'
-        type_analysis = type_analysis.dropna()  # Remove rows with NaN
-        type_analysis['count'] = type_analysis['count'].fillna(0).astype(int)  # Ensure count is integer and no NaN
+        # Gère les Nan et les empty
+        type_analysis = type_analysis.dropna()  # enlève les lignes avec Nan
+        type_analysis['count'] = type_analysis['count'].fillna(0).astype(int)  # Vérifie que l'entrée est un entier
         
         # Ensure all sizes are positive (Plotly requires size >= 0)
-        type_analysis['size'] = type_analysis['count'].apply(lambda x: max(x, 1))  # Avoid zero or negative sizes
+        type_analysis['size'] = type_analysis['count'].apply(lambda x: max(x, 1))  # Evite les valeures à zéro et les négatives
         
         if not type_analysis.empty:
             # Create scatter plot
@@ -440,10 +423,10 @@ def display_charts(df):
                 y=type_analysis['type'],
                 mode='markers',
                 marker=dict(
-                    size=type_analysis['size'],  # Use cleaned size column
+                    size=type_analysis['size'],
                     sizemode='area',
-                    sizeref=2.*max(type_analysis['size'])/(40.**2),  # Scale sizes appropriately
-                    sizemin=4  # Minimum size for visibility
+                    sizeref=2.*max(type_analysis['size'])/(40.**2),
+                    sizemin=4
                 ),
                 text=type_analysis['type'] + ': ' + type_analysis['count'].astype(str) + ' occurrences',
                 hoverinfo='text'
@@ -595,13 +578,13 @@ def main():
             df = load_data(uploaded_file)
             
         if df is not None:
-            # Afficher les informations sur le jeu de données
+            # Affiche les informations sur le jeu de données
             st.sidebar.success(f"✅ Fichier chargé : {len(df):,} tweets de {df['Date_de_publication'].min().date()} à {df['Date_de_publication'].max().date()}")
             
-            # Afficher les KPI
+            # Affiche les KPI
             display_kpis(df)
             
-            # Afficher les graphiques
+            # Affiche les graphiques
             display_charts(df)
     else:
         # Écran d'accueil
