@@ -45,12 +45,9 @@ Ce projet vise à analyser les tweets mentionnant **Engie** en utilisant **Strea
 - Les types de problèmes sont extraits en analysant les **mots-clés critiques** et les **contextes** des tweets.
 - Une classification est effectuée pour regrouper les tweets par **catégorie de problème**.
 
-### 💬 Prompts et Fine-tuning
-- Un modèle NLP a été **fine-tuné** pour comprendre le contexte des réclamations.
-- Un agent conversationnel peut être intégré pour **générer des réponses automatiques** aux réclamations.
-
-### 📝 Exemples d'interactions
-- **Tweet :** "Mon compteur Linky ne fonctionne plus depuis 2 jours, aucune aide !"  
+### 💬 Prompts
+- Un agent conversationnel peut être intégré pour **générer des réponses automatiques** aux réclamations. C'est du **prompt tuning**.
+ 
 
 ---
 
