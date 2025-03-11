@@ -51,7 +51,6 @@ Ce projet vise à analyser les tweets mentionnant **Engie** en utilisant **Strea
 
 ### 📝 Exemples d'interactions
 - **Tweet :** "Mon compteur Linky ne fonctionne plus depuis 2 jours, aucune aide !"  
-- **Agent IA :** "Bonjour, nous sommes désolés pour cette situation. Avez-vous essayé de redémarrer votre compteur ? Nous pouvons vous guider."
 
 ---
 
@@ -88,11 +87,11 @@ source env/bin/activate
 Depuis la racine du projet, exécutez :
 
 ```bash
-pip install -r source/requirements.txt
+pip install -r requirements.txt
 ```
 
 ### 3️⃣ Lancer l'application
 
 ```bash
-streamlit run source/app.py
+streamlit run src/app.py
 ```
