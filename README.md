@@ -28,7 +28,7 @@ Ce projet vise à analyser les tweets mentionnant **Engie** en utilisant **Strea
 | **Total tweets** | Nombre total de tweets analysés |
 | **Tweets par jour** | Moyenne quotidienne des tweets publiés |
 | **Tweets urgents (%)** | Proportion de tweets signalés comme urgents |
-| **Score d’inconfort (%)** | Moyenne du score d’inconfort des tweets |
+| **Score d’inconfort (%)** | Moyenne du score d'inconfort des tweets |
 
 ---
 
@@ -69,14 +69,36 @@ Ce projet vise à analyser les tweets mentionnant **Engie** en utilisant **Strea
 
 ### 1️⃣ Prérequis
 
-Installez les dépendances avec :
+#### Installation de l'environnement virtuel
+Pour créer et activer un environnement virtuel, exécutez les commandes suivantes :
+# Analyse des Tweets Engie avec Streamlit
+
+Ce projet vise à analyser les tweets mentionnant **Engie** en utilisant **Streamlit** pour la visualisation interactive des données.
+
+
+
+```bash
+# Créer un environnement virtuel
+python -m venv env
+
+# Activer l'environnement virtuel
+# Sur Windows
+env\Scripts\activate
+# Sur macOS/Linux
+source env/bin/activate
+
+```
+
+### 2️⃣ Installer les dépendances
+
+Depuis la racine du projet, exécutez :
 
 ```bash
 pip install -r source/requirements.txt
+```
 
-### 2️⃣ Lancer l'application
+### 3️⃣ Lancer l'application
 
 ```bash
 streamlit run source/app.py
-
-
+```
