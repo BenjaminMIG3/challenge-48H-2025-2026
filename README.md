@@ -70,12 +70,6 @@ Ce projet vise à analyser les tweets mentionnant **Engie** en utilisant **Strea
 ### 1️⃣ Prérequis
 
 #### Installation de l'environnement virtuel
-Pour créer et activer un environnement virtuel, exécutez les commandes suivantes :
-# Analyse des Tweets Engie avec Streamlit
-
-Ce projet vise à analyser les tweets mentionnant **Engie** en utilisant **Streamlit** pour la visualisation interactive des données.
-
-
 
 ```bash
 # Créer un environnement virtuel
